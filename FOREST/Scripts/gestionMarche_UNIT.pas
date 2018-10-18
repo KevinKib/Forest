@@ -1,0 +1,341 @@
+unit gestionMarche_UNIT;
+{Cette unité a pour rôle la gestion du marché}
+
+interface
+
+	uses 
+		fonctionsGlobales_UNIT, 
+		moduleGestionEcran_UNIT, 
+		System.SysUtils, 
+		initialisationVariables_UNIT;
+
+	procedure gestionMarche(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+	{RÔLE : Cette procédure a pour rôle la gestion du marché qu'il soit fermé ou ouvert.}
+
+	procedure commerce(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+	{RÔLE : Cette procédure a pour rôle l'affichage de l'écran du marché, section étalage de biens}	
+	{REMARQUE : On passe "commerce" dans interface pour que "commerce" et "acheter" puissent s'appeler entre elles}
+
+	procedure marcheOuvert(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+	{RÔLE : Cette procédure a pour rôle la gestion du marché lorsqu'il est ouvert. On propose alors au joueur de faire en tour pour acheter quelque chose}
+	{REMARQUE : On passe "marcheOuvert" dans interface pour que "marcheOuvert" et "commerce" puissent s'appeler entre elles}
+
+implementation
+
+var
+  texteOuvertureMarche: String;
+  achatID: Integer;
+
+const
+  PRIX_PTSRECRU     : Integer = 10;
+  PRIX_STOCKS       : Integer = 10;
+  PRIX_SOLDATS      : Integer = 16;
+  PRIX_CANONS       : Integer = 7;
+  PRIX_EXPLORATEUR  : Integer = 0;
+  PRIX_DRAGON       : Integer = 500;
+
+procedure conclureAchat(achat: Boolean; var game: TGame);
+{RÔLE : Cette procedure a pour role de valider ou non les achats. C'est un peu comme si c'etait un commerçant qui dit s'il peut nous vendre ou pas
+* parce que l'on aurait pas assez d'argent, par exemple}
+{PRINCIPE : On récupère la valeur du boolean achat qui détermine si l'achat a eu lieu ou pas. Puis on le matérialise en affichant soit 'achat valide'
+* soit 'vous n'avez pas assez d'argent' si le joueur ne peut se permettre cet achat}
+begin
+  if achat then
+    begin
+      couleurTexte(LightGreen);
+      ecrireAuCentre(28,'Achat validé !');
+      couleurTexte(White);
+      demanderReponse(game);
+    end
+  else
+    begin
+      couleurTexte(LightRed);
+      ecrireAuCentre(28,'Vous n''avez pas assez d''argent !');
+      couleurTexte(White);
+      demanderReponse(game);
+    end;
+end;
+
+procedure acheter_PointsRecrutement (var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procedure a pour rôle la validation de la transaction qui consiste a acheter des points de recrutements}
+{PRINCIPE : Si le joueur a assez de radis pour payer la transaction, celle ci a lieu avec la mise a jour des variables concernées}
+begin
+  if PRIX_PTSRECRU <= civ.gold then
+    begin
+      civ.gold := (civ.gold - PRIX_PTSRECRU);
+      civ.PointsRecrutement := civ.PointsRecrutement + 5;
+      conclureAchat(True, game);
+    end
+  else conclureAchat(False, game);
+end;
+
+procedure acheter_StocksNourriture(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procedure a pour rôle la validation de la transaction qui consiste a acheter des stocks de nourriture}
+{PRINCIPE : Si le joueur a assez de radis pour payer la transaction, celle ci a lieu avec la mise a jour des variables concernées}
+begin
+  if PRIX_STOCKS <= civ.gold then
+    begin
+      civ.gold := (civ.gold - PRIX_STOCKS);
+      civ.Food := civ.Food + 10;
+      conclureAchat(True, game);
+    end
+  else conclureAchat(False, game);
+end;
+
+procedure acheter_Soldats(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procedure a pour rôle la validation de la transaction qui consiste a acheter des soldats}
+{PRINCIPE : Si le joueur a assez de radis pour payer la transaction, celle ci a lieu avec la mise a jour des variables concernées}
+begin
+  if PRIX_SOLDATS <= civ.gold then
+    begin
+      civ.gold := (civ.gold - PRIX_SOLDATS);
+      combat.SoldatsDispo := combat.SoldatsDispo + 5;
+      conclureAchat(True, game);
+    end
+  else conclureAchat(False, game);
+end;
+
+procedure acheter_Canons(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procedure a pour rôle la validation de la transaction qui consiste a acheter des canons}
+{PRINCIPE : Si le joueur a assez de radis pour payer la transaction, celle ci a lieu avec la mise a jour des variables concernées}
+begin
+  if PRIX_CANONS <= civ.gold then
+    begin
+      civ.gold := (civ.gold - PRIX_CANONS);
+      combat.CanonsDispo := combat.CanonsDispo + 1;
+      conclureAchat(True, game);
+    end
+  else conclureAchat(False, game);
+end;
+
+procedure acheter_Explorateur(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+begin
+  if PRIX_EXPLORATEUR <= civ.gold then
+    begin
+      civ.gold := (civ.gold - PRIX_EXPLORATEUR);
+      //combat.CanonsDispo := combat.CanonsDispo + 1;
+      conclureAchat(True, game);
+    end
+  else conclureAchat(False, game);
+end;
+
+procedure acheter_Dragon(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procedure a pour rôle la validation de la transaction qui consiste a acheter un dragon}
+{PRINCIPE : Si le joueur a assez de radis pour payer la transaction, celle ci a lieu avec la mise a jour des variables concernées}
+begin
+  if PRIX_DRAGON <= civ.gold then
+    begin
+      civ.gold := (civ.gold - PRIX_DRAGON);
+      civ.Dragon := True;
+      conclureAchat(True, game);
+    end
+  else conclureAchat(False, game);
+end;
+
+procedure acheter(produit: String; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procédure a pour rôle l'affichage de l'écran du marché, section achats}
+{PRINCIPE : On affiche les différentes variables avec le texte qui les accompagne grace aux procedures d'affichage}
+begin
+  if produit='Points de recrutement' then
+    begin
+      {$REGION}
+      achatID := 1;
+      ecrireAuCentre(6,'Achat : Points de recrutement');
+
+      ecrireAuCentre(10,'DESCRIPTION');
+      ecrireAuCentre(11,'Le marché vous propose l''achat de 5 points de recrutement a prix cassé !');
+
+      ecrireAuCentre(16,'Prix en radis:');
+      ecrireAuCentre(17,IntToSTR(PRIX_PTSRECRU));
+      {$ENDREGION}
+    end
+  else if produit='Stocks de nourriture' then
+    begin
+      {$REGION}
+      achatID := 2;
+      ecrireAuCentre(6,'Achat : Stocks de nourriture');
+
+      ecrireAuCentre(10,'DESCRIPTION');
+      ecrireAuCentre(11,'Les fermes du marché vous proposent 10 stocks de légumes locaux');
+      ecrireAuCentre(12,'de très haute qualité !');
+
+      ecrireAuCentre(16,'Prix en radis:');
+      ecrireAuCentre(17,IntToSTR(PRIX_STOCKS));
+      {$ENDREGION}
+    end
+  else if produit='Soldats' then
+    begin
+      {$REGION}
+      achatID := 3;
+      ecrireAuCentre(6,'Achat : Soldats');
+
+      ecrireAuCentre(10,'DESCRIPTION');
+      ecrireAuCentre(11,'Le marché vous propose d''engager 5 soldats formés !');
+
+      ecrireAuCentre(16,'Prix en radis:');
+      ecrireAuCentre(17,IntToSTR(PRIX_SOLDATS));
+      {$ENDREGION}
+    end
+  else if produit='Canons' then
+    begin
+      {$REGION}
+      achatID := 4;
+      ecrireAuCentre(6,'Achat : Canons');
+
+      ecrireAuCentre(10,'DESCRIPTION');
+      ecrireAuCentre(11,'Le marché vous propose des canons d''une très grande efficacité !');
+
+      ecrireAuCentre(16,'Prix en radis:');
+      ecrireAuCentre(17,IntToSTR(PRIX_CANONS));
+      {$ENDREGION}
+    end
+  else if produit='Dragon' then
+    begin
+      {$REGION}
+      achatID := 5;
+      ecrireAuCentre(5,'Achat : Dragon');
+
+      ecrireAuCentre(10,'DESCRIPTION');
+      ecrireAuCentre(11,'La plus grande offre du marché !');
+      ecrireAuCentre(12,'Engagez un dragon formé au combat pour protéger votre civilisation !');
+
+      ecrireAuCentre(16,'Prix en radis:');
+      ecrireAuCentre(17,IntToSTR(PRIX_DRAGON));
+      {$ENDREGION}
+    end;
+
+  ecrireAuCentre(21,'Acceptez-vous cette proposition ?');
+  ecrireAuCentre(23,'1 - Oui');
+  ecrireAuCentre(24,'0 - Non');
+
+  game.Input := -1;
+  while not((game.Input = 1) or (game.Input = 0)) do
+  begin
+    demanderReponse(game);
+  end;
+
+  if game.Input = 1 then
+    begin
+      case achatID of
+        1: acheter_PointsRecrutement(game, civ, combat);
+        2: acheter_StocksNourriture(game, civ, combat);
+        3: acheter_Soldats(game, civ, combat);
+        4: acheter_Canons(game, civ, combat);
+        5: acheter_Dragon(game, civ, combat);
+      end;
+    end;
+
+  commerce(game, civ, combat);
+
+end;
+
+procedure commerce(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procédure a pour rôle l'affichage de l'écran du marché, section étalage de biens}
+{PRINCIPE : On affiche les différentes variables avec le texte qui les accompagne grace aux procedures d'affichage}
+begin
+  // Marché ouvert
+  effacerEcran;
+  displayHeader(game, civ);
+
+  // Titre
+  ecrireAuCentre(6,'Marché');
+  ecrireAuCentre(7,'------');
+
+  ecrireEnPositionXY(45,12,'1 - Acheter 5 points de recrutement');
+  ecrireEnPositionXY(45,13,'2 - Acheter 10 stocks de nourriture');
+  ecrireEnPositionXY(45,14,'3 - Engager 5 soldats');
+  ecrireEnPositionXY(45,15,'4 - Acheter 1 canon');
+
+  if not(civ.Histoire_PetitCamp1 or civ.Histoire_PetitCamp2 or civ.Histoire_PetitCamp3) then
+    ecrireEnPositionXY(45,16,'5 - Engager un dragon');
+
+  ecrireEnPositionXY(45,19,'0 - Ne rien acheter');
+
+  game.Input := -1;
+  while not((game.Input >= 0) and (game.Input <= 6)) do
+  begin
+    demanderReponse(game);
+  end;
+
+  effacerEcran;
+  displayHeader(game, civ);
+
+  case game.Input of
+    1: acheter('Points de recrutement', game, civ, combat);
+    2: acheter('Stocks de nourriture' , game, civ, combat);
+    3: acheter('Soldats'              , game, civ, combat);
+    4: acheter('Canons'               , game, civ, combat);
+    5: acheter('Dragon'               , game, civ, combat);
+  end;
+
+  // On met la variable game.Input à -1 pour ne pas sortir du marché lorsqu'on a terminé (voir ligne ~260)
+  game.Input := -1;
+
+end;
+
+procedure marcheOuvert(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procédure a pour rôle la gestion du marché lorsqu'il est ouvert. On propose alors au joueur de faire en tour pour acheter quelque chose}
+{PRINCIPE : On affiche tout simplement le texte et si le joueur veut acheter quelque chose, on lit son entrée et puis on le dirige vers la procedure commerce()}
+begin
+  ecrireAuCentre(16,'Le commerce inter-civilisations est actuellement ouvert !');
+  ecrireAuCentre(17,'Souhaitez-vous acheter quelque chose ?');
+
+  ecrireAuCentre(21,'1 - Oui');
+  ecrireAuCentre(22,'0 - Non');
+
+  game.Input := -1;
+  while not((game.Input = 0) or (game.Input = 1)) do
+  begin
+    demanderReponse(game);
+  end;
+
+  if (game.Input = 1) then commerce(game, civ, combat);
+
+end;
+
+procedure marcheFerme(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procédure a pour rôle la gestion du marché lorsqu'il est fermé. Il est alors impossible d'y faire des achats}
+{PRINCIPE : On affiche tout simplement le texte disant que le marché est actuellement fermé}
+begin
+  ecrireAuCentre(16,'Le commerce inter-civilisations est actuellement fermé.');
+  texteOuvertureMarche := 'Repassez lors du tour '+'30'+' !';
+  ecrireAuCentre(17,texteOuvertureMarche);
+  game.Input := 1;
+  while not(game.Input = 0) do
+  begin
+    demanderReponse(game);
+  end;
+end;
+
+procedure gestionMarche(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Cette procédure a pour rôle la gestion du marché qu'il soit fermé ou ouvert.}
+{PRINCIPE : On affiche tout simplement le texte disant que le marché existe et génère des radis par tour grace aux procedures d'affichage
+* Si le joueur a dépassé le tour n°30, le marché ouvre, sinon, il reste fermé}
+begin
+  // Header
+    displayHeader(game, civ);
+
+  // Titre
+    ecrireAuCentre(6,'Marché');
+    ecrireAuCentre(7,'------');
+
+    dessinerCadreXY(29,12,90,19, simple, White, Black);
+
+    ecrireEnPositionXY(40,14,'Votre marché génère ');
+    couleurTexte(Yellow);
+    ecrireEnPositionXY(60,14,IntToStr(civ.lvlMarche));
+    couleurTexte(White);
+    ecrireEnPositionXY(62,14,'radis par tour.');
+
+    if game.NbTour >= 30
+      then marcheOuvert(game, civ, combat)
+      else marcheFerme(game, civ, combat);
+
+  // Lecture de la réponse du joueur
+    case game.Input of
+      0: game.Screen := 'ecranPrincipal';
+    end;
+end;
+
+end.
+

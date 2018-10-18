@@ -1,0 +1,150 @@
+unit gestionDeCombat_UNIT;
+
+interface
+
+	uses 
+		fonctionsGlobales_UNIT, 
+		moduleGestionEcran_UNIT, 
+		System.SysUtils, 
+		initialisationVariables_UNIT;
+
+	// Déclaration des variables de texte dédiées à l'unité
+	var
+	  texteTitre,
+	  texteBarres,
+	  texteListeSoldats,
+	  texteSoldatsJoueur,
+	  texteCanonsJoueur,
+	  textePointsRecrutement
+	  : String;
+
+	const
+	  PRIX_RECRUTEMENT_SOLDAT : Integer = 1;
+	  PRIX_RECRUTEMENT_CANON  : Integer = 5;
+
+	procedure gestionDeCombat(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+	{RÔLE : Cette procédure a pour rôle d'afficher les différentes possibilités qu'a le joueur (attaquer un grand camp ou un petit etc) grace aux 
+    * differentes fonctions d'affichage}
+
+implementation
+
+  procedure recruterSoldat(var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procedure a pour role la gestion de recrutement de soldats avec la mise a jour des variables}
+  {PRINCIPE : On ne peut recruter de soldats que si on a une caserne et assez de points de recrutements. On teste donc ces booleens et on incremente
+  * en fonction}
+  begin
+    if (civ.PointsRecrutement >= PRIX_RECRUTEMENT_SOLDAT) and (civ.lvlCaserne > 0) then
+      begin
+        combat.SoldatsDispo := combat.SoldatsDispo + 1;
+        civ.PointsRecrutement := civ.PointsRecrutement - PRIX_RECRUTEMENT_SOLDAT;
+      end
+    else if ((civ.PointsRecrutement <= 0) and (civ.lvlCaserne > 0)) then
+      combat.texteRecrutement := 'Pas assez de points de recrutement.'
+
+    else if ((civ.lvlCaserne <= 0) and (civ.PointsRecrutement > 0)) then
+      combat.texteRecrutement := 'Il faut construire une caserne !'
+
+    else if ((civ.lvlCaserne <= 0) and (civ.PointsRecrutement <= 0)) then
+      combat.texteRecrutement := 'Pas assez de points, aucune caserne disponible';
+
+
+  end;
+
+  procedure recruterCanon(var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procedure a pour role la gestion de recrutement de canons avec la mise a jour des variables}
+  {PRINCIPE : On ne peut recruter de canons que si on a une caserne et assez de points de recrutements. On teste donc ces booleens et on incremente
+  * en fonction}
+  begin
+   if ((civ.PointsRecrutement >= PRIX_RECRUTEMENT_CANON) and (civ.lvlCaserne > 0) and (civ.lvlMine > 0)) then
+     begin
+       combat.CanonsDispo := combat.CanonsDispo + 1;
+       civ.PointsRecrutement := civ.PointsRecrutement - PRIX_RECRUTEMENT_CANON;
+     end
+
+   else if ((civ.PointsRecrutement <= 0) and (civ.lvlCaserne > 0) and (civ.lvlMine > 0))then
+    combat.texteRecrutement := 'Pas assez de points de recrutement.'
+
+   else if ((civ.lvlCaserne <= 0) and (civ.PointsRecrutement > 1) and (civ.lvlMine > 0))   then
+    combat.texteRecrutement := 'Il faut construire une caserne! '
+
+   else if ((civ.lvlCaserne > 0) and (civ.PointsRecrutement > 1) and (civ.lvlMine <= 0))   then
+    combat.texteRecrutement := 'Il faut construire une mine ! '
+
+   else if ((civ.lvlCaserne <= 0) and (civ.PointsRecrutement <= 1) and (civ.lvlMine <= 0)) then
+    combat.texteRecrutement := 'Pas assez de points, ni caserne, ni mine disponible';
+  end;
+
+  procedure attaquerCampBarbare(adversaire: String; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procedure a pour role la gestion d'attaque de camps barbares - elle lance les attaques}
+  {PRINCIPE : On teste si le joueur a au moins un soldat. Si non, il ne peut pas attaquer. Si oui, on affecte la taille du camp en fonction du combat
+  * passe en parametre}
+  begin
+    if combat.SoldatsDispo > 0 then
+      begin
+        if      adversaire = 'Petit' then combat.Adversaire := 'Petit camp barbare'
+        else if adversaire = 'Grand' then combat.Adversaire := 'Grand camp barbare';
+
+        game.Screen := 'ecranDeCombat';
+      end
+    else combat.texteRecrutement := 'Vous ne pouvez attaquer sans soldat.';
+  end;
+
+  procedure gestionDeCombat_afficherTexte(civ: TCivilisation; combat: TCombat);
+  {RÔLE : Cette procedure a pour role l'affichage de différents textes relatifs au combat (points de recrutements, soldats dispos, etc...}
+  {PRINCIPE : On appelle tout simplement les différentes procédures d'affichage}
+  begin
+    texteTitre              := 'Ecran de gestion militaire';
+    texteBarres             := '--------------------------------';
+    texteListeSoldats       := 'Liste de troupes disponibles : ';
+    texteSoldatsJoueur      := '- Soldats disponibles : '+IntToStr(combat.SoldatsDispo);
+    texteCanonsJoueur       := '- Canons disponibles  : '+IntToStr(combat.CanonsDispo);
+    textePointsRecrutement  := 'Nombre de points de recrutements : '+IntToStr(civ.PointsRecrutement);
+
+    ecrireAuCentre(6,texteTitre);
+    ecrireAuCentre(7,texteBarres);
+    ecrireEnPositionXY(4,9,texteListeSoldats);
+    ecrireEnPositionXY(4,10,texteBarres);
+    ecrireEnPositionXY(5,12,texteSoldatsJoueur);
+    ecrireEnPositionXY(5,13,texteCanonsJoueur);
+    ecrireEnPositionXY(4,15,textePointsRecrutement);
+  end;
+
+  procedure gestionDeCombat(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour rôle d'afficher les différentes possibilités qu'a le joueur (attaquer un grand camp ou un petit etc) grace aux 
+  * differentes fonctions d'affichage}
+  {PRINCIPE : On appelle tout simplement les différentes procedures d'affichage en lisant l'input du joueur pour le rediriger vers l'ecran correpondant ensuite }
+  begin
+
+    // Header
+      displayHeader(civ.texteCivilisation, civ.texteTour, civ.Nom, game.NbTour);
+
+    // Affichage
+      gestionDeCombat_afficherTexte(civ, combat);
+
+    // Affichage des réponses du joueur
+      ecrireEnPositionXY(4,21,'1 - Recruter un soldat');
+      ecrireEnPositionXY(4,22,'2 - Recruter un canon');
+      ecrireEnPositionXY(4,24,'4 - Attaquer un petit camp barbare');
+      ecrireEnPositionXY(4,25,'5 - Attaquer un grand camp barbare');
+      ecrireEnPositionXY(4,27,'0 - Retour au menu principal');
+      ecrireAuCentre(27,combat.texteRecrutement);
+
+    // Affichage du cadre de réponse
+      dessinerCadreXY(95,26,105,28, simple, White, Black);
+      deplacerCurseurXY(100,27);
+      readln(game.Input);
+
+    // Lecture des entrées du joueur
+      case game.Input of
+        1: recruterSoldat(civ,combat);
+        2: recruterCanon (civ,combat);
+        4: attaquerCampBarbare('Petit',game, civ, combat);
+        5: attaquerCampBarbare('Grand',game, civ, combat);
+        0: game.Screen := 'ecranPrincipal';
+      end;
+
+    effacerEcran();
+  end;
+
+
+end.

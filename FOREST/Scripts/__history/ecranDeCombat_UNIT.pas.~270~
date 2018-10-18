@@ -1,0 +1,505 @@
+unit ecranDeCombat_UNIT;
+
+interface
+
+uses
+  fonctionsGlobales_UNIT,
+  moduleGestionEcran_UNIT,
+  initialisationVariables_UNIT,
+  System.SysUtils,
+  math;
+
+procedure ecranDeCombat(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+{RÔLE : Definit les sous programmes relatifs au combat, dont des procedures d'attaques de camps petits/grands et une procedure
+qui s'occupe de l'affichage de l'ecran Combat}
+
+
+implementation
+
+  var
+  {$REGION}
+    Perte_Canons_Ennemis,            //perte de canons chez l'ennemi
+    Perte_Canons_Joueur,             //perte de canons chez le joueur
+    Perte_Soldats_Ennemis,           //perte de soldats chez l'ennemi
+    Perte_Soldats_Joueur,            //perte de soldats chez le joueur
+    Perte_Dragon_Ennemi,
+    Perte_Dragon_Joueur
+    : Integer;
+
+    texteCombat1,
+    texteCombat2,
+    texteCombat3,
+    texteCombat4
+    : String;
+
+    texteCombatContre,
+    texteBarres,
+    texteSoldatsJoueur,
+    texteCanonsJoueur,
+    texteSoldatsEnnemis,
+    texteCanonsEnnemis,
+    texteForcesAllies,
+    texteForcesEnnemis
+    : String;
+
+    attaqueEnnemi : Integer;
+    combatTermine: Boolean;
+    coefficientBonheur: Real;
+
+    // Variables agissant comme des constantes (car elles ne dépendent que de constantes)
+    RAND_NBSOLDATS_PETIT,
+    RAND_NBCANONS_PETIT,
+    RAND_NBSOLDATS_GRAND,
+    RAND_NBCANONS_GRAND,
+    RAND_NBSOLDATS_PETIT_CAMP_HUMAIN,
+    RAND_NBCANONS_PETIT_CAMP_HUMAIN,
+    RAND_NBSOLDATS_GRAND_CAMP_HUMAIN,
+    RAND_NBCANONS_GRAND_CAMP_HUMAIN: Integer;
+
+    victoire: Boolean;
+
+
+  {$ENDREGION}
+
+  const
+  {$REGION}
+    // Constante qui décide du nombre maximum de perte de soldats
+    RAND_PERTESOLDATS     : Integer = 3;
+    RAND_PERTECANONS      : Integer = 2;
+
+    // Nombre de soldats du petit camp
+    MIN_NBSOLDATS_PETIT   : Integer = 20;
+    MAX_NBSOLDATS_PETIT   : Integer = 30;
+
+    // Nombre de canons du petit camp
+    MIN_NBCANONS_PETIT    : Integer = 3;
+    MAX_NBCANONS_PETIT    : Integer = 7;
+
+    // Nombre de soldats du grand camp
+    MIN_NBSOLDATS_GRAND   : Integer = 80;
+    MAX_NBSOLDATS_GRAND   : Integer = 120;
+
+    // Nombre de canons du grand camp
+    MIN_NBCANONS_GRAND    : Integer = 20;
+    MAX_NBCANONS_GRAND    : Integer = 30;
+
+    // Nombre de soldats et canons des petits camps humains
+    NBSOLDATS_PETIT_CAMP_HUMAIN : Array[1..2] of Integer = (75, 100);
+    NBCANONS_PETIT_CAMP_HUMAIN  : Array[1..2] of Integer = (15, 20);
+
+    // Nombre de soldats et canons du grand camp humain
+    NBSOLDATS_GRAND_CAMP_HUMAIN : Array[1..2] of Integer = (180, 200);
+    NBCANONS_GRAND_CAMP_HUMAIN  : Array[1..2] of Integer = (40, 50);
+
+  {$ENDREGION}
+
+  procedure victoireCampHumain(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procedure a pour rôle de dire au joueur s'il a reussi a vaincre un camp humain}
+  {PRINCIPE : Grace a un case, on sait quel numero de camp on a reussi a abattre. On en informe le joueur grace a une simple
+  * procedure d'affichage et on le redirige vers l'écran de GestionDeCombat}
+  begin
+    effacerEcran;
+    displayHeader(game, civ);
+    dessinerCadreXY(38,14,82,18, simple, White, Black);
+
+    case civ.nbCamp of
+      1: civ.Histoire_PetitCamp1 := False;
+      2: civ.Histoire_PetitCamp2 := False;
+      3: civ.Histoire_PetitCamp3 := False;
+    end;
+
+    ecrireAuCentre(16,'Vous avez vaincu le camp humain n°'+IntToStr(civ.nbCamp)+' !');
+    civ.nbCamp := 0;
+
+    game.Input := -1;
+    while not game.Input = 0 do
+    begin
+      demanderReponse(game);
+    end;
+
+    game.Screen := 'gestionDeCombat';
+    effacerEcran();
+  end;
+
+  procedure ecranDeCombat_initVariables();
+  {RÔLE : Cette procedure a pour rôle d'initaliser les variables necessaires pour le combat}
+  {PRINCIPE : On crée les variables des forces ennemis dans les petits/grands camps grace aux valeurs 
+  * maximum et minimum que peuvent avoir les forces ennemies et les forces du joueur}
+  begin
+    // Constantes de fluctuation
+    RAND_NBSOLDATS_PETIT  := 2 + MAX_NBSOLDATS_PETIT - MIN_NBSOLDATS_PETIT;
+    RAND_NBCANONS_PETIT   := 2 + MAX_NBCANONS_PETIT - MIN_NBCANONS_PETIT;
+    RAND_NBSOLDATS_GRAND  := 2 + MAX_NBSOLDATS_GRAND - MIN_NBSOLDATS_GRAND;
+    RAND_NBCANONS_GRAND   := 2 + MAX_NBCANONS_GRAND - MIN_NBCANONS_GRAND;
+
+    RAND_NBSOLDATS_PETIT_CAMP_HUMAIN := 2 + NBSOLDATS_PETIT_CAMP_HUMAIN[2] - NBSOLDATS_PETIT_CAMP_HUMAIN[1];
+    RAND_NBCANONS_PETIT_CAMP_HUMAIN  := 2 + NBCANONS_PETIT_CAMP_HUMAIN[2]  - NBCANONS_PETIT_CAMP_HUMAIN[1];
+    RAND_NBSOLDATS_GRAND_CAMP_HUMAIN := 2 + NBSOLDATS_PETIT_CAMP_HUMAIN[2] - NBSOLDATS_PETIT_CAMP_HUMAIN[1];
+    RAND_NBCANONS_GRAND_CAMP_HUMAIN  := 2 + NBCANONS_PETIT_CAMP_HUMAIN[2]  - NBCANONS_PETIT_CAMP_HUMAIN[1];
+
+  end;
+
+  procedure aleatoireNbEffectif(var combat: TCombat);
+  begin
+    if combat.Adversaire = 'Petit camp barbare' then
+      begin
+        attendre(50);
+        randomize; combat.SoldatsEnnemis  := random(RAND_NBSOLDATS_PETIT) + MIN_NBSOLDATS_PETIT;
+        attendre(50);
+        randomize; combat.CanonsEnnemis   := random(RAND_NBCANONS_PETIT)  + MIN_NBCANONS_PETIT;
+      end
+    else if combat.Adversaire = 'Grand camp barbare' then
+      begin
+        attendre(50);
+        randomize; combat.SoldatsEnnemis  := random(RAND_NBSOLDATS_GRAND) + MIN_NBSOLDATS_GRAND;
+        attendre(50);
+        randomize; combat.CanonsEnnemis   := random(RAND_NBCANONS_GRAND)  + MIN_NBCANONS_GRAND;
+      end
+    else if combat.Adversaire = 'Camp humain' then
+      begin
+        attendre(50);
+        randomize; combat.SoldatsEnnemis  := random(RAND_NBSOLDATS_PETIT_CAMP_HUMAIN) + NBSOLDATS_PETIT_CAMP_HUMAIN[1];
+        attendre(50);
+        randomize; combat.CanonsEnnemis   := random(RAND_NBCANONS_PETIT_CAMP_HUMAIN)  + NBCANONS_PETIT_CAMP_HUMAIN[1];
+      end
+    else if combat.Adversaire = 'Grand camp humain' then
+      begin
+        attendre(50);
+        randomize; combat.SoldatsEnnemis  := random(RAND_NBSOLDATS_GRAND_CAMP_HUMAIN) + NBSOLDATS_GRAND_CAMP_HUMAIN[1];
+        attendre(50);
+        randomize; combat.CanonsEnnemis   := random(RAND_NBCANONS_GRAND_CAMP_HUMAIN)  + NBCANONS_GRAND_CAMP_HUMAIN[1];
+      end;
+  end;
+
+  procedure attaque_aleatoire(arsenal: String; combat: TCombat);
+  {RÔLE : Cette procédure a pour rôle de gérer l'attaque aleatoire produite par des barbares sur le joueur}
+  {PRINCIPE : Selon l'argument passé en paramètre, on génère une perte de forces armées chez le joueur et l'ennemi
+  * de manière aléatoire}
+  var
+    RAND_PERTE_SOLDATS_ENNEMIS,
+    RAND_PERTE_CANONS_ENNEMIS: Integer;
+    Attaques_Canons,
+    Attaques_Soldats: Real;
+  begin
+
+    { On attend un certain intervalle de temps entre chaque Random(),
+      car la fonction nécessite du temps pour s'exécuter correctement,
+      ce étant dû à l'utilisation de l'algorithme Mersenne Twister.
+      Se référer à la documentation : https://www.freepascal.org/docs-html/rtl/system/random.html  }
+
+
+    // Joueur
+    if arsenal = 'Soldats' then
+      begin
+        {$REGION}
+        // Formules d'attaque des soldats ennemis (fragmentées)
+
+          // Attaque des soldats sur les soldats ennemis
+          Attaques_Soldats  := (RAND_PERTESOLDATS * combat.Bonus_Soldats * coefficientBonheur);
+
+          // Attaque des canons sur les soldats ennemis
+          Attaques_Canons   := (min(combat.SoldatsDispo, combat.CanonsDispo) * combat.Bonus_Canons);
+
+          // Somme de ces attaques (converties au nombre entier inférieur)
+          RAND_PERTE_SOLDATS_ENNEMIS := Round( Attaques_Soldats + Attaques_Canons );
+
+          // Aléatoire
+          randomize; Perte_Soldats_Ennemis := Random(RAND_PERTE_SOLDATS_ENNEMIS);
+
+        attendre(100);
+
+        // Formules d'attaque des canons ennemis (fragmentées)
+
+          // Attaques des soldats et canons sur les canons ennemis
+          RAND_PERTE_CANONS_ENNEMIS := Round(RAND_PERTECANONS * combat.Bonus_Soldats * combat.Bonus_Canons);
+
+          // Aléatoire
+          randomize; Perte_Canons_Ennemis := Random(RAND_PERTE_CANONS_ENNEMIS);
+        {$ENDREGION}
+      end
+    else if arsenal = 'Canons' then
+      begin
+        {$REGION}
+        // Formules d'attaque des soldats ennemis (fragmentées)
+
+          // Attaque des soldats et des canons sur les soldats ennemis
+          RAND_PERTE_SOLDATS_ENNEMIS := Round(RAND_PERTESOLDATS * combat.Bonus_Soldats * combat.Bonus_Canons * coefficientBonheur);
+
+          // Aléatoire
+          randomize; Perte_Soldats_Ennemis := Random(RAND_PERTE_SOLDATS_ENNEMIS);
+
+        attendre(100);
+
+        // Formules d'attaque des canons ennemis (fragmentées)
+
+          // Attaque des soldats sur les canons ennemis
+          Attaques_Soldats  := RAND_PERTECANONS * combat.Bonus_Soldats;
+
+          // Attaque des canons sur les canons ennemis
+          Attaques_Canons   := (min(combat.SoldatsDispo, combat.CanonsDispo) div 2) * combat.Bonus_Canons;
+
+          // Somme de ces attaques (converties au nombre entier inférieur)
+          RAND_PERTE_CANONS_ENNEMIS := Round(Attaques_Soldats + Attaques_Canons);
+
+          // Aléatoire
+          randomize; Perte_Canons_Ennemis := Random(RAND_PERTE_CANONS_ENNEMIS);
+        {$ENDREGION}
+      end;
+
+    // IA
+    randomize; attaqueEnnemi := Random(2);
+    attendre(100);
+
+    if (attaqueEnnemi = 0) and (combat.SoldatsDispo > 0) then
+      begin
+        randomize; Perte_Soldats_Joueur := Random(RAND_PERTESOLDATS  + min(combat.SoldatsEnnemis, combat.CanonsEnnemis) );
+        attendre(100);
+        randomize; Perte_Canons_Joueur := Random(RAND_PERTECANONS);
+        attendre(100);
+      end
+    else
+      begin
+        randomize; Perte_Soldats_Joueur := Random(RAND_PERTESOLDATS );
+        attendre(100);
+        randomize; Perte_Canons_Joueur := Random(RAND_PERTECANONS + (min(combat.SoldatsEnnemis, combat.CanonsEnnemis) div 2));
+        attendre(100);
+      end;
+
+
+
+  end;
+
+  procedure attaque_affichage(combat: TCombat);
+  {RÔLE : Cette procédure a pour rôle d'afficher le texte en rapport avec l'attaque des différents camps}
+  {PRINCIPE : On écrit le texte grace a la procdure ecrireEnPosition()}
+  begin
+    texteCombat1 := IntToStr(Perte_Soldats_Joueur);
+    texteCombat2 := IntToStr(Perte_Canons_Joueur);
+    texteCombat3 := IntToStr(Perte_Soldats_Ennemis);
+    texteCombat4 := IntToStr(Perte_Canons_Ennemis);
+
+    ecrireEnPositionXY(32,15,'-');
+    ecrireEnPositionXY(32,16,'-');
+    ecrireEnPositionXY(32,20,'-');
+    ecrireEnPositionXY(32,21,'-');
+
+    couleurTexte(LightRed);
+    ecrireEnPositionXY(33,15,'   ');
+    ecrireEnPositionXY(33,16,'   ');
+    ecrireEnPositionXY(33,20,'   ');
+    ecrireEnPositionXY(33,21,'   ');
+    ecrireEnPositionXY(33,15,texteCombat1);
+    ecrireEnPositionXY(33,16,texteCombat2);
+    ecrireEnPositionXY(33,20,texteCombat3);
+    ecrireEnPositionXY(33,21,texteCombat4);
+
+    couleurTexte(White);
+    ecrireEnPositionXY(29,15,'   ');
+    ecrireEnPositionXY(29,16,'   ');
+    ecrireEnPositionXY(29,20,'   ');
+    ecrireEnPositionXY(29,21,'   ');
+    ecrireEnPositionXY(29,15,IntToStr(combat.SoldatsDispo));
+    ecrireEnPositionXY(29,16,IntToStr(combat.CanonsDispo));
+    ecrireEnPositionXY(29,20,IntToStr(combat.SoldatsEnnemis));
+    ecrireEnPositionXY(29,21,IntToStr(combat.CanonsEnnemis));
+
+    deplacerCurseurXY(100,27);
+  end;
+
+  procedure attaque(arsenal: String; var combat: TCombat);
+  {RÔLE : Cette procedure a pour role de simuler une attaque en modifiant les forces des deux camps qui se comabattent}
+  {PRINCIPE : On recupère le descriptif des forces armées de l'ennemi et grâce au hasard on génère les pertes dans les deux camps.
+  La procedure renvoie le descrptif des forces restant pour les deux camps}
+  begin
+
+    attaque_aleatoire(arsenal, combat);
+
+    // Eviter les nombres de soldats négatifs
+    if (Perte_Soldats_Ennemis > combat.SoldatsEnnemis)  then Perte_Soldats_Ennemis  := combat.SoldatsEnnemis;
+    if (Perte_Canons_Ennemis > combat.CanonsEnnemis)    then Perte_Canons_Ennemis   := combat.CanonsEnnemis;
+    if (Perte_Soldats_Joueur > combat.SoldatsDispo)     then Perte_Soldats_Joueur   := combat.SoldatsDispo;
+    if (Perte_Canons_Joueur > combat.CanonsDispo)       then Perte_Canons_Joueur    := combat.CanonsDispo;
+
+    // Décrémentation du nombre de soldats
+    combat.SoldatsEnnemis := combat.SoldatsEnnemis  - Perte_Soldats_Ennemis;
+    combat.CanonsEnnemis  := combat.CanonsEnnemis   - Perte_Canons_Ennemis;
+    combat.SoldatsDispo   := combat.SoldatsDispo    - Perte_Soldats_Joueur;
+    combat.CanonsDispo    := combat.CanonsDispo     - Perte_Canons_Joueur;
+
+    // Affichage
+    attaque_affichage(combat);
+  end;
+
+  procedure deroulementCombat(var game: TGame; var combat: TCombat);
+   {RÔLE : Cette procedure a pour role de simuler le deroulement du combat, c'est-à-dire, prolonger les attaques jusqu'a ce que l'un
+  * des deux camps perde.}
+  {PRINCIPE : Tant que le combat n'est pas terminé, on appelle les procedures d'attaque jusqu'à ce que soit le joueur ait 0 soldat ou le
+  * camp ennemi ait 0 soldat. Puis on sort de la boucle et on affecte la victoire au méritant.}
+  begin
+    combatTermine := False;
+
+    // Boucle de lecture de l'entrée du joueur (tant qu'elle n'est pas bonne, on lui la redemande)
+    while not combatTermine do
+    begin
+
+      // On définit une valeur de départ à game.Input pour toujours rentrer dans la boucle
+      game.Input := 0;
+
+      while (game.Input <> 1) and (game.Input <> 2) do
+        begin
+          // On efface l'entrée du joueur et on lui la redemande.
+          deplacerCurseurXY(100,27);
+          writeln('    ');
+          deplacerCurseurXY(100,27);
+
+          readln(game.Input);
+        end;
+
+      if      (game.Input=1) then attaque('Soldats',combat)
+      else if (game.Input=2) then attaque('Canons',combat);
+
+      // Si le combat est terminé, ce booléen retournera Vrai.
+      // Le combat se termine lorsque les soldats d'un coté meurent.
+      combatTermine := (combat.SoldatsDispo = 0) or (combat.SoldatsEnnemis = 0);
+    end;
+
+    readln;
+    effacerEcran;
+
+  end;
+
+  procedure ecranDeCombat_afficherTexte(combat: TCombat);
+  {RÔLE : Cette procedure a pour role d'afficher les differents textes en rapport avec l'ecran de combat}
+  {PRINCIPE : On affiche le texte à transmettre grace a la procedure ecrireEnPosition()}
+  begin
+    texteCombatContre   := 'Combat contre : '+combat.Adversaire;
+    texteBarres         := '-------------------------------------';
+    texteSoldatsJoueur  := '- Soldats disponibles : '+IntToStr(combat.SoldatsDispo);
+    texteCanonsJoueur   := '- Canons disponibles  : '+IntToStr(combat.CanonsDispo);
+    texteSoldatsEnnemis := '- Soldats disponibles : '+IntToStr(combat.SoldatsEnnemis);
+    texteCanonsEnnemis  := '- Canons disponibles  : '+IntToStr(combat.CanonsEnnemis);
+    texteForcesAllies   := 'Descriptif de vos forces :';
+    texteForcesEnnemis  := 'Descriptif des forces ennemies :';
+
+    ecrireAuCentre(6,texteCombatContre);
+    ecrireAuCentre(7,texteBarres);
+    ecrireEnPositionXY(4,14,texteForcesAllies);
+    ecrireEnPositionXY(5,15,texteSoldatsJoueur);
+    ecrireEnPositionXY(5,16,texteCanonsJoueur);
+    ecrireEnPositionXY(4,19,texteForcesEnnemis);
+    ecrireEnPositionXY(5,20,texteSoldatsEnnemis);
+    ecrireEnPositionXY(5,21,texteCanonsEnnemis);
+  end;
+
+  procedure ecranDeResultats(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procedure a pour role de gérer l'ecran des resultats en fonction du resultat du combat }
+  {PRINCIPE : on appelle les différentes fonctions d'affichage selon le resultat qu'a obtenu le joueur pendant le combat.
+  * Si son nombre de soldats vaut 0 alors il a perdu et on affichera un texte en fonction, etc...}
+  var
+    aleatoire: Integer;
+  begin
+
+    displayHeader(game, civ);
+    dessinerCadreXY(42,14,77,18, simple, White, Black);
+
+    if (combat.SoldatsDispo = 0) then
+      begin
+        // Défaite
+        victoire := False;
+        couleurTexte(LightRed);
+        ecrireAuCentre(16,'Vous avez perdu le combat...');
+        readln;
+
+        // Nouvel écran
+        effacerEcran;
+        displayHeader(game, civ);
+
+        // Aléatoire (pour l'or)
+        randomize;
+        aleatoire := (random(3)+1)*2; // valeur égale a 2 ou 4
+
+        // Dépouillage
+        combat.CanonsDispo := 0;
+        civ.gold := civ.gold div aleatoire;
+
+        // Affichage
+        couleurTexte(LightRed);
+
+        if aleatoire=2 then
+          ecrireAuCentre(16,'Vous vous êtes fait dépouiller la moitié de vos radis')
+        else if aleatoire=4 then
+          ecrireAuCentre(16,'Vous vous êtes fait dépouiller les trois quarts de vos radis')
+        else
+          begin
+            ecrireAuCentre(16,'Vous vous êtes fait dépouiller tous vos radis');
+            civ.gold := 0;
+          end;
+
+        ecrireAuCentre(17,'ainsi que tous vos canons !');
+
+      end
+    else
+      begin
+        // Victoire
+        victoire := True;
+        couleurTexte(LightGreen);
+        ecrireAuCentre(16,'Vous avez gagné le combat!');
+        combat.CanonsDispo := combat.CanonsDispo + combat.CanonsEnnemis;
+      end;
+
+    // Affichage du cadre de réponse
+    dessinerCadreXY(95,26,105,28, simple, White, Black);
+    deplacerCurseurXY(100,27);
+    readln;
+  end;
+
+  procedure ecranDeCombat(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procedure a pour role de gérer l'affichage de l'ecran de combat}
+  {PRINCIPE :  On appelle les differentes procedures pour afficher le header, le texte pertinent pour le deroulement du combat 
+               ainsi que l'affichage des resultats}
+  begin
+
+    // Header
+    displayHeader(game, civ);
+
+    // Aléatoire qui décide de l'effectif ennemi
+    aleatoireNbEffectif(combat);
+
+    // Affichage du texte de l'écran de combat
+    ecranDeCombat_afficherTexte(combat);
+
+    // Initialisation des variables de fluctuation (rand)
+    ecranDeCombat_initVariables();
+
+    // Calcul du coefficient de bonheur (influence la puissance des soldats).
+    // Au dessus de 5: bonus. En dessous de 5: malus.
+    coefficientBonheur := ((civ.bonheur/5)+2)/3;
+
+    // Choix du joueur
+    ecrireEnPositionXY(4,24,'1 - Attaquer les soldats ennemis');
+    ecrireEnPositionXY(4,25,'2 - Attaquer les canons ennemis');
+
+    // Cadre
+    dessinerCadreXY(95,26,105,28, simple, White, Black);
+    deplacerCurseurXY(100,27);
+
+    // Combat
+    deroulementCombat(game, combat);
+
+    // Affichage des résultats du combat
+    ecranDeResultats(game, civ, combat);
+
+    // Sortie de la procédure
+    if      (victoire) and (combat.Adversaire = 'Camp humain')       then victoireCampHumain(game, civ, combat)
+    else if (victoire) and (combat.Adversaire = 'Grand camp humain') then ecran_FinDuJeu(game, civ, combat)
+    else
+      begin
+        game.Screen := 'gestionDeCombat';
+        effacerEcran();
+      end;
+
+  end;
+
+
+
+end.

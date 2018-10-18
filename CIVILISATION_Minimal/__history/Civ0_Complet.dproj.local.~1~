@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="Scripts"/>
+    <File Path="Scripts\menuInitial_UNIT.pas"/>
+    <File Path="Scripts\ecranPrincipal_UNIT.pas"/>
+    <File Path="Scripts\gestionCapitale_UNIT.pas"/>
+    <File Path="Scripts\gestionDeCombat_UNIT.pas"/>
+    <File Path="Scripts\ecranDeCombat_UNIT.pas"/>
+    <File Path="Scripts\fonctionsGlobales_UNIT.pas"/>
+    <File Path="Scripts\moduleGestionEcran_UNIT.pas"/>
+    <File Path="Scripts\initialisationVariables_UNIT.pas"/>
+  </ProjectSortOrder>
+	<Transactions>
+    <Transaction>2017/10/26 11:47:07.000.212,=D:\Civilisation_Projet\CIVILISATION 1.0_GEANY\Unit1.pas</Transaction>
+    <Transaction>2017/10/26 11:50:39.000.036,D:\Civilisation_Projet\CIVILISATION 1.0_GEANY\Unit1.pas=D:\Civilisation_Projet\CIVILISATION 1.0_GEANY\Scripts\saut_ligne_UNIT.pas</Transaction>
+    <Transaction>2017/11/06 10:28:21.000.663,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\Civilisation 27_10_2017\CIVILISATION 27_10_2017_GEANY\Scripts\fonctionsGlobales_UNIT.pas</Transaction>
+    <Transaction>2017/11/06 10:28:21.000.704,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\Civilisation 27_10_2017\CIVILISATION 27_10_2017_GEANY\Scripts\gestionDeCombat_Unit.pas</Transaction>
+    <Transaction>2017/11/06 10:28:21.000.643,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\Civilisation 27_10_2017\CIVILISATION 27_10_2017_GEANY\Scripts\ecranPrincipal_Unit.pas</Transaction>
+    <Transaction>2017/11/06 10:28:21.000.723,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\Civilisation 27_10_2017\CIVILISATION 27_10_2017_GEANY\Scripts\menuInitial_Unit.pas</Transaction>
+    <Transaction>2017/11/06 10:28:21.000.683,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\Civilisation 27_10_2017\CIVILISATION 27_10_2017_GEANY\Scripts\gestionCapitale_Unit.pas</Transaction>
+    <Transaction>2017/11/06 10:28:21.000.625,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\Civilisation 27_10_2017\CIVILISATION 27_10_2017_GEANY\Scripts\ecranDeCombat_Unit.pas</Transaction>
+    <Transaction>2017/11/09 09:50:24.000.906,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\CIVILISATION 06_11_2017_3\Scripts\moduleGestionEcran_Unit.pas</Transaction>
+    <Transaction>2017/11/16 13:53:38.000.013,=\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\CIVILISATION 16_11_2017\Scripts\fonctionsProgramme.pas</Transaction>
+    <Transaction>2017/11/16 13:58:28.000.580,\\iut21\Ressources\Users\Etudiants\IQ\IQ-1\kk494706\Modules\M1102 AlgoProg\CIVILISATION 16_11_2017\Scripts\fonctionsProgramme.pas=</Transaction>
+    <Transaction>2017/11/17 18:28:46.000.947,=D:\Mes documents\DelphiPrograms\CIVILISATION 16_11_2017_2\Unit1.pas</Transaction>
+    <Transaction>2017/11/17 18:29:14.000.495,D:\Mes documents\DelphiPrograms\CIVILISATION 16_11_2017_2\Scripts\initialisationVariables_UNIT.pas=D:\Mes documents\DelphiPrograms\CIVILISATION 16_11_2017_2\Unit1.pas</Transaction>
+  </Transactions>
+</BorlandProject>

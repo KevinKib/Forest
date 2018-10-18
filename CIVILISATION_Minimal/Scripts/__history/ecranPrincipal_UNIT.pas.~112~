@@ -1,0 +1,210 @@
+﻿unit ecranPrincipal_UNIT;
+interface
+
+uses
+  fonctionsGlobales_UNIT,
+  moduleGestionEcran_UNIT,
+  System.SysUtils,
+  math,
+  initialisationVariables_UNIT;
+
+procedure ecranPrincipal(var game: TGame; var civ: TCivilisation);
+{RÔLE : Cette procedure correspond a l'affichage de l'ecran princtipal qui permet d'acceder aux autres fenetres grace a l'input du joueur}
+
+implementation
+
+  var
+    texteNom,
+    texteNourriture,
+    textePopulation,
+    texteNourritureParTour,
+    texteCroissance,
+    texteTravailParTour,
+    texteConstructionLancee
+    : String;
+
+  const
+    CROISSANCE_FOODMAX      : Array[1..10] of Integer = (10, 50, 150, 350, 500, 700, 900, 1100, 1300, 1500);
+    MAX_PTSRECRU            : Array[0..3] of Integer = (5, 20, 50, 100);
+    BONUS_FERME_FOOD        : Integer = 5;
+    BONUS_MINE_TRAVAIL      : Integer = 2;
+    BONUS_CARRIERE_TRAVAIL  : Integer = 5;
+
+  procedure updateConstruction(var civ: TCivilisation);
+  {RÔLE : Cette procédure a pour role de gerer la construction à chaque fin de tour, si construction il y a}
+  {PRINCIPE : On incremente les niveaux à chaque fin de construction}
+  begin
+    // Effets de la construction
+      if civ.CurrentConstruction = 'Ferme' then
+        begin
+          civ.Food_Par_Tour := civ.Food_Par_Tour + BONUS_FERME_FOOD;
+          civ.lvlFerme := civ.lvlFerme + 1 ;
+        end
+      else if civ.CurrentConstruction = 'Mine' then
+        begin
+          civ.Travail_Par_Tour := civ.Travail_Par_Tour + BONUS_MINE_TRAVAIL;
+          civ.lvlMine := civ.lvlMine + 1 ;
+        end
+      else if civ.CurrentConstruction = 'Carriere' then
+        begin
+          civ.Travail_Par_Tour := civ.Travail_Par_Tour + BONUS_CARRIERE_TRAVAIL;
+          civ.lvlCarriere := civ.lvlCarriere + 1 ;
+        end
+      else if civ.CurrentConstruction = 'Caserne' then
+        begin
+          civ.lvlCaserne := civ.lvlCaserne + 1 ;
+        end;
+
+    // Réinitialisation
+      civ.NbConstructions := civ.NbConstructions + 1;
+      civ.Travail := 0;
+      civ.CurrentConstruction := 'Aucun';
+      civ.Construction_Texte := 'Pas de construction en cours' ;
+  end;
+
+  procedure updateCroissance(var civ: TCivilisation);
+ {RÔLE : Cette procedure a pour role de gerer les constantes de la civilisation a chaque fin de tour}
+ {PRINCIPE : On incremente la population, le travail par tour, la nourriture. Puis on modifie le prochain pallier de nourriture a atteindre
+ * en fonction de la population actuelle grace au case qui gere la nourriture maximale pouvant etre atteinte}
+  begin
+    civ.Population := civ.Population + 1;
+    civ.Travail_Par_Tour := civ.Travail_Par_Tour + 1;
+    civ.Food_Par_Tour := civ.Food_Par_Tour - 1;
+    civ.Food := 0;
+
+    // On modifie le prochain pallier de nourriture a atteindre en fonction de la population actuelle.
+    civ.Food_Max := CROISSANCE_FOODMAX[civ.Population];
+  end;
+
+  procedure finDeTour_construction(var civ: TCivilisation);
+  {RÔLE : Cette procedure a pour role de gerer les fins de tour de la construction}
+  {PRINCIPE : On met a jour la construction en disant par exemple qu'un nouveau batiment a ete construit grace a l'appel de procedure updateConstruction()}
+  begin
+    civ.Travail := civ.Travail + civ.Travail_Par_Tour;
+    civ.texteTravail := 'Travail accumulé : '+IntToStr(civ.Travail)+'/'+IntToStr(civ.Travail_Max);
+
+    // Si la construction est terminée, alors on la met a jour.
+    if (civ.Travail >= civ.Travail_Max) then updateConstruction(civ);
+  end;
+
+  procedure finDeTour_croissance(var civ: TCivilisation);
+  {RÔLE : Cette procédure a pour role de gerer les fins de tour concernant la croissance cad la nourriture}
+  {PRINCIPE : On augmente la nourriture en fonction de la production actuelle puis on calcule le nombre de tours que le joueur
+  * doit attendre avant une nouvelle croissance de sa population}
+  begin
+    // Augmentation de la nourriture en fonction de la production actuelle
+    civ.Food := civ.Food + civ.Food_Par_Tour;
+
+    if (civ.Food_Par_Tour > 0) then
+      begin
+        // Cette formule calcule le nombre de tours que le joueur doit attendre
+        // avant une nouvelle croissance de sa population.
+        civ.Nb_Tours_Levelup := ceil((civ.Food_Max - civ.Food)/civ.Food_Par_Tour);
+
+        // Si la nourriture est supérieure à la nourriture maximale, alors il y a croissance.
+        if (civ.Food >= civ.Food_Max) then updateCroissance(civ);
+      end;
+
+  end;
+
+  procedure finDeTour(var game: TGame; var civ: TCivilisation);
+ {RÔLE : Cette procédure a pour role de gerer les fins de tours, en particulier ce qui concerne les constructions et la caserne. On lance la construction ou on dit qu'il 
+ * n'y a pas de construction}
+ {PRINCIPE : On incremente le nombre de tours de jeu, on met a jour les points de recrutement de la caserne.
+ * Si une construction est en cours alors on incremente egalement le travail}
+  begin
+    game.NbTour := game.NbTour + 1;
+    texteConstructionLancee := 'Construction lancée !';
+
+    if (civ.PointsRecrutement < MAX_PTSRECRU[civ.lvlCaserne]) then civ.PointsRecrutement := civ.PointsRecrutement + 1;
+
+    // Si une construction est en cours, alors on incrémente le travail
+    if (civ.CurrentConstruction <> 'Aucun') then finDeTour_construction(civ);
+    finDeTour_croissance(civ);
+
+  end;
+
+  procedure ecranPrincipal_initVariables(civ: TCivilisation);
+  {RÔLE : Cette procedure a pour role d'afficher les differents textes concernant la civilisation}
+  {PRINCIPE : On affecte les differents textes a afficher en convertissant les variables en chaines de caracteres }
+  begin
+    texteNom                := 'Nom : '+civ.Ville;
+    texteNourriture         := 'Nourriture : '+IntToStr(civ.Food)+' / '+IntToStr(civ.Food_Max);
+    texteTravailParTour     := 'Travail par tour : '+IntToStr(civ.Travail_Par_Tour);
+    textePopulation         := 'Population : '+IntToStr(civ.Population);
+    texteNourritureParTour  := 'Nourriture par tour : '+IntToStr(civ.Food_Par_Tour);
+
+    if (civ.Food_Par_Tour > 0)
+      then texteCroissance := 'Nb tours avant croissance : '+IntToStr(civ.Nb_Tours_Levelup)
+      else texteCroissance := 'Aucune croissance possible.';
+
+  end;
+
+  procedure ecranPrincipal(var game: TGame; var civ: TCivilisation);
+  {RÔLE : Cette procedure correspond a l'affichage de l'ecran princtipal qui permet d'acceder aux autres fenetres grace a l'input du joueur}
+  {PRINCIPE : On affiche les différents textes, on donne le choix au joueur entre differentes fenetres a afficher ensuite
+  * puis on lit son input et on appelle les procedures d'affichage d'ecran en fonction de cet input}
+  begin
+
+    // Header
+      displayHeader(civ.texteCivilisation, civ.texteTour, civ.Nom, game.NbTour);
+
+    // Titre
+      ecrireAuCentre(6,'Ecran de gestion de la civilisation') ;
+      ecrireAuCentre(7,'---------------------------------------') ;
+      ecrireEnPositionXY(4,9,'Liste des villes de la civilisation :');
+      ecrireEnPositionXY(4,10,'-------------------------------------');
+
+
+    // Affichage des propriétés de la civilisation
+
+      // Texte
+        ecranPrincipal_initVariables(civ);
+
+        if civ.CurrentConstruction = 'Aucun' then
+        begin
+          civ.texteConstruction := 'Pas de construction en cours';
+          civ.texteTravail := '';
+        end;
+
+
+      // Affichage
+        ecrireEnPositionXY(4,12,texteNom);
+        ecrireEnPositionXY(40,12,texteNourriture);
+        ecrireEnPositionXY(80,12,texteTravailParTour);
+        ecrireEnPositionXY(4,13,textePopulation);
+        ecrireEnPositionXY(40,13,texteNourritureParTour);
+        ecrireEnPositionXY(80,13,civ.texteConstruction);
+        ecrireEnPositionXY(40,14,texteCroissance);
+        ecrireEnPositionXY(80,14,civ.texteTravail);
+
+
+    // Options du jeu
+      ecrireEnPositionXY(4,23,'1 - Accéder à : Paris') ;
+      ecrireEnPositionXY(4,24,'2 - Gestion militaire et diplomatique') ;
+      ecrireEnPositionXY(4,26,'9 - Fin de tour');
+      ecrireEnPositionXY(4,27,'0 - Quitter la partie');
+
+
+    // Affichage du cadre de réponse
+      dessinerCadreXY(95,26,105,28, simple, White, Black);
+      deplacerCurseurXY(100,27);
+      readln(game.Input);
+
+
+    // Lecture de la réponse du joueur
+      case game.Input of
+        1: game.Screen := 'gestionCapitale';
+        2: game.Screen := 'gestionDeCombat';
+        9: finDeTour(game, civ);
+        0: game.Screen := 'menuInitial';
+        else beep();
+      end;
+
+    effacerEcran();
+
+
+  end;
+
+
+end.

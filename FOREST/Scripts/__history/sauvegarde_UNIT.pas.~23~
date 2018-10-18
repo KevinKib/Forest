@@ -1,0 +1,155 @@
+unit sauvegarde_UNIT;
+
+interface
+
+uses
+  System.SysUtils,
+  initialisationVariables_UNIT;
+
+procedure writeFile(nbFile: Integer; game: TGame; civ: TCivilisation; combat: TCombat);
+procedure readFile(nbFile: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+//procedure writeInfo(info: TInfo);
+//procedure readInfo(var info: TInfo);
+
+implementation
+
+var
+  saveFile: file of TSave;
+  save: TSave;
+
+  saveInfo: file of TInfo;
+  info: TInfo;
+
+const
+  SAVE_FILE_NAMES: Array[1..3] of String = ('Saves\file1.bin', 'Saves\file2.bin', 'Saves\file3.bin');
+
+procedure convert(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+begin
+  save.game   := game;
+  save.civ    := civ;
+  save.combat := combat;
+end;
+
+procedure unconvert(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+begin
+  game    := save.game;
+  civ     := save.civ;
+  combat  := save.combat;
+end;
+
+procedure writeInfo(info: TInfo);
+begin
+  // On assigne un fichier à notre programme.
+  assign(saveInfo,'Saves\info.bin');
+
+  // On ouvre notre fichier en écriture.
+  rewrite(saveInfo);
+
+  // On écrit dans notre fichier.
+  write(saveInfo, info);
+
+  // On ferme notre fichier.
+  close(saveInfo);
+end;
+
+procedure readInfo(var info: TInfo);
+begin
+
+  assign(saveInfo,'Saves\info.bin');
+  reset(saveInfo);
+  read(saveInfo, info);
+  close(saveInfo);
+
+end;
+
+procedure writeFile(nbFile: Integer; game: TGame; civ: TCivilisation; combat: TCombat);
+begin
+  convert(game, civ, combat);
+
+  readInfo(info);
+
+  case nbFile of
+    1: info.filename1 := civ.Nom;
+    2: info.filename2 := civ.Nom;
+    3: info.filename3 := civ.Nom;
+  end;
+
+  // On écrit le nom de notre sauvegarde dans le fichier d'informations.
+  writeInfo(info);
+
+  // On assigne un fichier à notre programme.
+  assign(saveFile,SAVE_FILE_NAMES[nbFile]);
+
+  // On ouvre notre fichier en écriture.
+  rewrite(saveFile);
+
+  // On écrit dans notre fichier.
+  write(saveFile, save);
+
+  // On ferme notre fichier.
+  close(saveFile);
+end;
+
+procedure readFile(nbFile: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+begin
+
+  assign(saveFile,SAVE_FILE_NAMES[nbFile]);
+  reset(saveFile);
+  read(saveFile, save);
+  close(saveFile);
+
+  unconvert(game, civ, combat);
+end;
+
+
+
+
+
+
+
+
+
+
+// test
+{$REGION}
+{
+procedure ecrireFich();
+var
+  f: file of ElementPile;
+  x: PItem;
+begin
+  assign(f, nom);
+  rewrite(f);
+  x := p.pSommet;
+  while x<>NIL do
+  begin
+    write(f, x^.elt);
+    x := x.suivant;
+  end;
+  close(f);
+end;
+
+function lireFich(nom: String): Pile;
+var
+  f: file of ElementPile;
+  e: ElementPile;
+  p: Pile;
+  i, nb: Integer;
+begin
+  assign(f, nom);
+  reset(f);
+  nb := filesize(f);
+  init(p);
+  for i := nb-1 downto 0 do
+  begin
+    seek(f, i);
+    read(f, e);
+    empile(p, e);
+  end;
+  close(f);
+  lireFich := p;
+end;
+}
+{$ENDREGION}
+
+end.

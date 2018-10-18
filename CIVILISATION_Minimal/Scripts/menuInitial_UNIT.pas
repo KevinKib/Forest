@@ -1,0 +1,60 @@
+unit menuInitial_UNIT;
+
+interface
+
+uses
+  fonctionsGlobales_UNIT,
+  moduleGestionEcran_UNIT,
+  initialisationVariables_UNIT,
+  System.SysUtils;
+
+procedure menuInitial(var game: TGame);
+
+implementation
+
+procedure menuInitial(var game: TGame);
+{RÔLE ET PRINCIPE : Cette procédure correspond à l'affichage du menu initial grace aux différentes procedures d'affichage}
+
+begin
+  // Affichage du titre
+    ecrireAuCentre(2,'  ______ _____ _    _ _____ _       _____    _           _______ _____ _____   ______      ______ ');
+    ecrireAuCentre(3,' / _____|_____) |  | (_____) |     (_____)  | |     /\  (_______|_____) ___ \ |  ___ \    / __   |');
+    ecrireAuCentre(4,'| /        _  | |  | |  _  | |        _      \ \   /  \  _         _ | |   | || |   | |  | | //| |');
+    ecrireAuCentre(5,'| |       | |  \ \/ /  | | | |       | |      \ \ / /\ \| |       | || |   | || |   | |  | |// | |');
+    ecrireAuCentre(6,'| \_____ _| |_  \  /  _| |_| |_____ _| |_ _____) ) |__| | |_____ _| || |___| || |   | |  |  /__| |');
+    ecrireAuCentre(7,' \______|_____)  \/  (_____)_______|_____|______/|______|\______|_____)_____/ |_|   |_|   \_____/ ');
+
+
+  // Affichage du scénario
+    ecrireAuCentre(12,'  Bienvenue dans CIVILISATION 0 - Call to Coding.');
+
+    ecrireAuCentre(14,'  Bâtissez un empire qui laissera sa marque dans l''histoire,');
+    ecrireAuCentre(15,'  depuis ses premiers pas à l''époque de l''antiquité jusqu''en l''an 3000.');
+    ecrireAuCentre(16,'  Lancez vous dans une conquête au cours de laquelle chaque stratégie que vous concevez,');
+    ecrireAuCentre(17,'  chaque découverte technologique que vous faites et chaque guerre que vous déclarez');
+    ecrireAuCentre(18,'  a des répercussions sur l''avenir de votre empire.');
+
+    ecrireAuCentre(20,'  Répondez à l''appel du pouvoir. L''avenir est entre vos mains.');
+
+
+  // Options de jeu
+    ecrireEnPositionXY(4,25,'1 - Débutez une nouvelle partie');
+    ecrireEnPositionXY(4,26,'2 - Quitter le jeu');
+
+
+  // Affichage du cadre de réponse
+    dessinerCadreXY(95,25,105,27, simple, White, Black);
+    deplacerCurseurXY(100,26);
+    readln(game.Input);
+
+  // Lecture de la réponse du joueur
+    case game.Input of
+      1: game.Screen := 'ecranPrincipal';
+      2: game.Run := False;
+      else beep();
+    end;
+
+  effacerEcran();
+end;
+
+end.

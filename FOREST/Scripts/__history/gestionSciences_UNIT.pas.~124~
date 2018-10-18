@@ -1,0 +1,355 @@
+unit gestionSciences_UNIT;
+{Cette unité a pour rôle la gestion du centre de sciences et de recherche, c'est-à-dire la bibliothèque}
+
+
+interface
+
+  uses
+    fonctionsGlobales_UNIT, 
+    moduleGestionEcran_UNIT, 
+    System.SysUtils, 
+    initialisationVariables_UNIT;
+
+  procedure gestionSciences(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+    {RÔLE : Cette procédure a pour rôle de gérer le menu de la recherche de la bibliothèque c'est-à-dire son affichage. Le joueur peut ensuite accéder à un
+	* menu descriptif de chaque recherche, plus détaillé}
+
+implementation
+
+  var
+    texteRecherche : String;
+    texteAffichage : String;
+    texteInfoJoueur: String;
+    rechercheID    : Integer;
+
+  const
+    PRIX_EPEE_TRANCHANTE  : Integer = 70;
+    TRAV_EPEE_TRANCHANTE  : Integer = 50;
+
+    PRIX_ARTILLERIE       : Integer = 80;
+    TRAV_ARTILLERIE       : Integer = 60;
+
+    PRIX_POTION_MAGIQUE   : Integer = 100;
+    TRAV_POTION_MAGIQUE   : Integer = 50;
+
+    PRIX_BAC_COMPOST      : Integer = 0;
+    TRAV_BAC_COMPOST      : Integer = 100;
+
+    PRIX_BROCANTE         : Integer = 5;
+    TRAV_BROCANTE         : Integer = 80;
+
+    PRIX_STRATEGIE        : Integer = 50;
+    TRAV_STRATEGIE        : Integer = 50;
+
+
+  procedure conditions(civ: TCivilisation; prix: Integer);
+  {RÔLE : Cette procédure a pour role de gérer les conditions d'accès du joueur aux recherches (ex: pas possible si déjà une recherche en cours}
+  {PRINCIPE : On teste si le joueur a déjà une recherche en cours ou non grace a civ.CurrentRecherche ainsi que les radis qu'ils possèdent afin que
+  * le tout soit en adéquation avec l'action choisie. Si le joueur a assez de radis et n'a aucune recherche en cours, il peut se permettre
+  * d'entamer une nouvelle recherche }
+  begin
+    if (civ.CurrentRecherche <> 'Aucun') and not(civ.gold < prix) then texteInfoJoueur := 'Vous avez déja une recherche en cours !'
+    else if not(civ.CurrentRecherche <> 'Aucun') and (civ.gold < prix) then texteInfoJoueur := 'Vous n''avez pas assez de radis.'
+    else texteInfoJoueur := 'Vous avez déja une recherche en cours et pas assez de radis!';
+  end;
+
+  procedure epeeTranchante(prix, travail: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour role de gérer la recherche "Epee Tranchante" (Augmente les degats infligés par les soldats)}
+  {PRINCIPE : Si les conditions le permettent, la recherche est lancée et on modifie les variables concernées par les changements}
+  begin
+
+    if (civ.CurrentRecherche = 'Aucun') AND (civ.gold >= prix) then
+      begin
+
+        texteInfoJoueur := 'Recherche lancée !';
+        civ.Travail_Max_Recherche := travail;
+        civ.CurrentRecherche := 'Epée Tranchante';
+        civ.gold := civ.gold - prix;
+
+        //appel procedure qui modifie les proba combat
+      end
+    else conditions(civ, prix);
+
+  end;
+
+  procedure artillerie(prix, travail: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour role de gérer la recherche "Artillerie" (Augmente les degats infligés par les canons)}
+  {PRINCIPE : Si les conditions le permettent, la recherche est lancée et on modifie les variables concernées par les changements}
+  begin
+    if (civ.CurrentRecherche = 'Aucun') AND (civ.gold >= prix) then
+      begin
+        texteInfoJoueur := 'Recherche lancée !';
+        civ.Travail_Max_Recherche := travail;
+        civ.CurrentRecherche := 'Artillerie';
+        civ.gold := civ.gold - prix;
+
+        //appel procedure qui modifie les proba cannons
+      end
+    else conditions(civ, prix);
+  end;
+
+  procedure potionMagique(prix, travail: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour role de gérer la recherche "Potion magique" (Diminue le temps de construction necessaire)}
+  {PRINCIPE : Si les conditions le permettent, la recherche est lancée et on modifie les variables concernées par les changements}
+  begin
+    if (civ.CurrentRecherche = 'Aucun') AND (civ.gold >= prix) then
+      begin
+        texteInfoJoueur := 'Recherche lancée !';
+        civ.Travail_Max_Recherche := travail;
+        civ.CurrentRecherche := 'Potion magique';
+        civ.gold := civ.gold - prix;
+
+      end
+   else conditions(civ, prix);
+  end;
+
+  procedure bacCompost(prix, travail: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour role de gérer la recherche "Bac a compost" (Augmente la production de nourriture)}
+  {PRINCIPE : Si les conditions le permettent, la recherche est lancée et on modifie les variables concernées par les changements}
+  begin
+    if (civ.CurrentRecherche = 'Aucun') AND (civ.gold >= prix) then
+      begin
+        texteInfoJoueur := 'Recherche lancée !';
+        civ.Travail_Max_Recherche := travail;
+        civ.CurrentRecherche := 'Bac à Compost';
+        civ.gold := civ.gold - prix;
+
+        //appel procedure qui modifie la production bouffe
+      end
+    else conditions(civ, prix);
+  end;
+
+  procedure brocanteForestiere (prix, travail: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour role de gérer la recherche "La brocante forestière" (Diminue les prix au marché}
+  {PRINCIPE : Si les conditions le permettent, la recherche est lancée et on modifie les variables concernées par les changements}
+    begin
+      if (civ.CurrentRecherche = 'Aucun') AND (civ.gold >= prix) then
+        begin
+          texteInfoJoueur := 'Recherche lancée !';
+          civ.Travail_Max_Recherche := travail;
+          civ.CurrentRecherche := 'Brocante Forestière';
+          civ.gold := civ.gold - prix;
+
+          //appel procedure qui modifie la production bouffe
+        end
+      else conditions(civ, prix);
+    end;
+
+  procedure strategie(prix, travail: Integer; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour role de gérer la recherche "Stratégie de Combat Contre Les Humains"}
+  {PRINCIPE : Si les conditions le permettent, la recherche est lancée et une fenetre affichant les resultats de la recherche s'affiche à la fin de l'etude}
+     begin
+      if (civ.CurrentRecherche = 'Aucun') AND (civ.gold >= prix) then
+        begin
+          texteInfoJoueur := 'Recherche lancée !';
+          civ.Travail_Max_Recherche := travail;
+          civ.CurrentRecherche := 'Stratégie';
+          civ.gold := civ.gold - prix;
+
+          //appel procedure qui modifie la strategie
+        end
+      else conditions(civ, prix);
+    end;
+
+  procedure menuRecherche(recherche: String; var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour rôle de gérer le menu de la recherche de la bibliothèque c'est-à-dire son affichage}
+  {RÔLE : On affiche les travaux d'études disponibles au joueur avec leur prix et une description courte. On lit l'entrée du joueur qui décide quelle etude
+  * sera lancée ou pas}
+  var
+    lancerRecherche: Boolean;
+  begin
+
+    if civ.CurrentRecherche = 'Aucun' then
+      begin
+        lancerRecherche := False;
+        if      (recherche = 'Epée Tranchante')     then lancerRecherche := not(civ.recherche_EpeeTranchante)
+        else if (recherche = 'Artillerie')          then lancerRecherche := not(civ.recherche_Artillerie)
+        else if (recherche = 'Potion magique')      then lancerRecherche := not(civ.recherche_PotionMagique)
+        else if (recherche = 'Bac à Compost')       then lancerRecherche := not(civ.recherche_BacCompost)
+        else if (recherche = 'Brocante Forestière') then lancerRecherche := not(civ.recherche_Brocante)
+        else if (recherche = 'Stratégie')           then lancerRecherche := not(civ.recherche_Strategie);
+
+        if lancerRecherche then
+        begin
+          effacerEcran;
+          displayHeader(game, civ);
+          rechercheID := 0;
+
+          if (recherche = 'Epée Tranchante') then
+            begin
+              // Description
+              {$REGION}
+              rechercheID := 1;
+
+              ecrireAuCentre(5,'Recherche : Epee Tranchante');
+
+              ecrireAuCentre(9,'DESCRIPTION');
+              ecrireAuCentre(10,'Affute les épées des soldats, donc augmente leur puissance d''attaque !');
+
+              ecrireAuCentre(14,'Travail nécessaire:');
+              ecrireAuCentre(15,IntToStr(TRAV_EPEE_TRANCHANTE));
+              ecrireAuCentre(17,'Prix en radis:');
+              ecrireAuCentre(18,IntToSTR(PRIX_EPEE_TRANCHANTE));
+              {$ENDREGION}
+            end
+          else if (recherche = 'Artillerie') then
+            begin
+              // Description
+              {$REGION}
+              rechercheID := 2;
+
+              ecrireAuCentre(5,'Recherche : Artillerie');
+
+              ecrireAuCentre(9,'DESCRIPTION');
+              ecrireAuCentre(10,'Développe une nouvelle technologie pour les canons afin d''améliorer leur efficacité !');
+
+              ecrireAuCentre(14,'Travail nécessaire:');
+              ecrireAuCentre(15,IntToStr(TRAV_ARTILLERIE));
+              ecrireAuCentre(17,'Prix en radis:');
+              ecrireAuCentre(18,IntToSTR(PRIX_ARTILLERIE));
+              {$ENDREGION}
+            end
+          else if (recherche = 'Potion magique') then
+            begin
+              // Description
+              {$REGION}
+              rechercheID := 3;
+
+              ecrireAuCentre(5,'Recherche : Potion Magique');
+
+              ecrireAuCentre(9,'DESCRIPTION');
+              ecrireAuCentre(10,'Augmente la productivité de la population !');
+
+              ecrireAuCentre(14,'Travail nécessaire:');
+              ecrireAuCentre(15,IntToStr(TRAV_POTION_MAGIQUE));
+              ecrireAuCentre(17,'Prix en radis:');
+              ecrireAuCentre(18,IntToSTR(PRIX_POTION_MAGIQUE));
+              {$ENDREGION}
+            end
+          else if (recherche = 'Bac à Compost') then
+            begin
+              // Description
+              {$REGION}
+              rechercheID := 4;
+
+              ecrireAuCentre(5,'Recherche : Bac à Compost');
+
+              ecrireAuCentre(9,'DESCRIPTION');
+              ecrireAuCentre(10,'Augmente la production de nourriture !');
+
+              ecrireAuCentre(14,'Travail nécessaire:');
+              ecrireAuCentre(15,IntToStr(TRAV_BAC_COMPOST));
+              ecrireAuCentre(17,'Prix en radis:');
+              ecrireAuCentre(18,IntToSTR(PRIX_BAC_COMPOST));
+              {$ENDREGION}
+            end
+          else if (recherche = 'Brocante Forestière') then
+            begin
+              // Description
+              {$REGION}
+              rechercheID := 5;
+
+              ecrireAuCentre(5,'Recherche : Brocante Forestière');
+
+              ecrireAuCentre(9,'DESCRIPTION');
+              ecrireAuCentre(10,'Permet d''obtenir des réductions sur le marché !');
+
+              ecrireAuCentre(14,'Travail nécessaire:');
+              ecrireAuCentre(15,IntToStr(TRAV_BROCANTE));
+              ecrireAuCentre(17,'Prix en radis:');
+              ecrireAuCentre(18,IntToSTR(PRIX_BROCANTE));
+              {$ENDREGION}
+            end
+          else if (recherche = 'Stratégie') then
+            begin
+              // Description
+              {$REGION}
+              rechercheID := 6;
+
+              ecrireAuCentre(5,'Recherche : Stratégie');
+
+              ecrireAuCentre(9,'DESCRIPTION');
+              ecrireAuCentre(10,'Théorise les stratégies de combat pour vaincre les humains !');
+
+              ecrireAuCentre(14,'Travail nécessaire:');
+              ecrireAuCentre(15,IntToStr(TRAV_STRATEGIE));
+              ecrireAuCentre(17,'Prix en radis:');
+              ecrireAuCentre(18,IntToSTR(PRIX_STRATEGIE));
+              {$ENDREGION}
+            end;
+
+          ecrireAuCentre(21,'Voulez-vous lancer cette recherche ?');
+          ecrireAuCentre(23,'1 - Oui');
+          ecrireAuCentre(24,'2 - Non');
+
+          game.Input := 0;
+          while not((game.Input = 1) or (game.Input = 2)) do
+          begin
+            demanderReponse(game);
+          end;
+
+          if game.Input = 1 then
+            begin
+              case rechercheID of
+                1: epeeTranchante (PRIX_EPEE_TRANCHANTE,TRAV_EPEE_TRANCHANTE,game,civ,combat);
+                2: artillerie     (PRIX_ARTILLERIE,TRAV_ARTILLERIE,game,civ,combat);
+                3: potionMagique  (PRIX_POTION_MAGIQUE,TRAV_POTION_MAGIQUE,game,civ,combat);
+                4: bacCompost     (PRIX_BAC_COMPOST,TRAV_BAC_COMPOST,game,civ,combat);
+                5: brocanteForestiere (PRIX_BROCANTE,TRAV_BROCANTE,game,civ,combat);
+                6: strategie      (PRIX_STRATEGIE,TRAV_STRATEGIE,game,civ,combat);
+              end;
+            end;
+        end;
+      end
+    else texteInfoJoueur := 'Vous avez déjà une recherche en cours !';
+
+
+
+  end;
+
+  procedure gestionSciences(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  {RÔLE : Cette procédure a pour rôle de gérer le menu de la recherche de la bibliothèque c'est-à-dire son affichage. Le joueur peut ensuite accéder à un
+  * menu descriptif de chaque recherche, plus détaillé}
+  {PRINCIPE  : On affiche les radis et le travail disponibles puis on lit l'entrée du joueur qui sélectionne une telle ou telle recherche qui l'intéresse}
+  begin
+    // Header
+      displayHeader(game, civ);
+
+    // Titre
+      ecrireAuCentre(6,'Ecran de gestion des sciences et recherches') ;
+      ecrireAuCentre(7,'-------------------------------------------') ;
+
+    //Affichage ameliorations
+
+      if not(civ.recherche_EpeeTranchante)  then lancerRecherche := ecrireEnPositionXY(6,15,'1 - Epée Tranchante');
+      if not(civ.recherche_Artillerie)      then lancerRecherche := ecrireEnPositionXY(6,16,'2 - Artillerie');
+      if not(civ.recherche_PotionMagique)   then lancerRecherche := ecrireEnPositionXY(6,17,'3 - Potion magique');
+      if not(civ.recherche_BacCompost)      then lancerRecherche := ecrireEnPositionXY(6,18,'4 - Bac a compost');
+      if not(civ.recherche_Brocante)        then lancerRecherche := ecrireEnPositionXY(6,19,'5 - La brocante forestière');
+      if not(civ.recherche_Strategie)       then lancerRecherche := ecrireEnPositionXY(6,20,'6 - Stratégie de Combat Contre Les Humains');
+
+      ecrireEnPositionXY(3,23,'0 - Sortir de la bibliothèque');
+
+    //Affichage
+      texteRecherche := 'Recherche actuelle: '+civ.CurrentRecherche;
+      texteAffichage := 'Travail accumulé: '+IntToStr(civ.travailRecherche) + '/' + IntToStr(civ.Travail_Max_Recherche);
+      ecrireEnPositionXY(3,12,texteRecherche);
+      ecrireEnPositionXY(3,13,texteAffichage);
+      ecrireAuCentre(25,texteInfoJoueur);
+
+    // Affichage du cadre de réponse
+      demanderReponse(game);
+
+    // Lecture de la réponse du joueur
+      case game.Input of
+        0: game.Screen := 'ecranPrincipal';
+        1: menuRecherche('Epée Tranchante', game, civ, combat);
+        2: menuRecherche('Artillerie', game, civ, combat);
+        3: menuRecherche('Potion magique', game, civ, combat);
+        4: menuRecherche('Bac à Compost', game, civ, combat);
+        5: menuRecherche('Brocante Forestière', game, civ, combat);
+        6: menuRecherche('Stratégie', game, civ, combat);
+      end;
+  end;
+
+end.

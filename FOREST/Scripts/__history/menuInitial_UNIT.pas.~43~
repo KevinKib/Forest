@@ -1,0 +1,229 @@
+﻿unit menuInitial_UNIT;
+
+interface
+
+uses
+  fonctionsGlobales_UNIT,
+  moduleGestionEcran_UNIT,
+  initialisationVariables_UNIT,
+  sauvegarde_UNIT,
+  System.SysUtils;
+
+procedure menuInitial(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+
+implementation
+
+procedure afficherDragon(color, pos: Integer);
+begin
+  couleurTexte(color);
+
+  ecrireAuCentre(pos   , '		        "$$o.	                                  ');
+  ecrireAuCentre(pos+1 , '		          "*$$o.                                 ');
+  ecrireAuCentre(pos+2 , '		             "$$$o.                           ');
+  ecrireAuCentre(pos+3 , '		        "$$$$bo...      ..o:                                  ');
+  ecrireAuCentre(pos+4 , '		          "$$$$$$$$booocS$$$    ..    ,.                      ');
+  ecrireAuCentre(pos+5 , '		       ".    "*$$$$SP     V$o..o$$. .$$$b                     ');
+  ecrireAuCentre(pos+6 , '		        "$$o. .$$$$$o. ...A$$$$$$$$$$$$$$b                  ');
+  ecrireAuCentre(pos+7 , '		  ""bo.   "*$$$$$$$$$$$$$$$$$$$$P*$$$$$$$$:                   ');
+  ecrireAuCentre(pos+8 , ' 	     "$$.    V$$$$$$$$$P"**""*"   VP  * "l                    ');
+  ecrireAuCentre(pos+9 , '		       "$$$o.4$$$$$$$$X                                       ');
+  ecrireAuCentre(pos+10, '		        "*$$$$$$$$$$$$$AoA$o..oooooo..           .b           ');
+  ecrireAuCentre(pos+11, '		               .X$$$$$$$$$$$P""     ""*oo,,     ,$P           ');
+  ecrireAuCentre(pos+12, '		              $$P""V$$$$$$$:    .        ""*****"             ');
+  ecrireAuCentre(pos+13, '		            .*"    A$$$$$$$$o.4;      .                       ');
+  ecrireAuCentre(pos+14, '		                 .oP""   "$$$$$$b.  .$;                       ');
+  ecrireAuCentre(pos+15, '		                          A$$$$$$$$$$P                        ');
+  ecrireAuCentre(pos+16, '		                          "  "$$$$$P"                         ');
+  ecrireAuCentre(pos+17, '		                              $$P*"                           ');
+  ecrireAuCentre(pos+18, '		                              .$"                       ');
+  ecrireAuCentre(pos+19, '		                               "                              ');
+end;
+
+procedure afficherTitre(color, Xpos,Ypos: Integer);
+begin
+  couleurTexte(color);
+  {
+  ecrireEnPositionXY(Xpos,Ypos  , '______ ___________ _____ _____ _____   ');
+  ecrireEnPositionXY(Xpos,Ypos+1, '|  ___|  _  | ___ \  ___/  ___|_   _|  ');
+  ecrireEnPositionXY(Xpos,Ypos+2, '| |   | | | | |_/ / |__ \ `--.  | |    ');
+  ecrireEnPositionXY(Xpos,Ypos+3, '|  _| | | | |    /|  __| `--. \ | |    ');
+  ecrireEnPositionXY(Xpos,Ypos+4, '| |   \ \_/ / |\ \| |___/\__/ / | |    ');
+  ecrireEnPositionXY(Xpos,Ypos+5, '\_|    \___/\_| \_\____/\____/  \_/    ');
+  }
+
+  ecrireEnPositionXY(Xpos,Ypos    ,'     ▄████████  ▄██████▄     ▄████████    ▄████████    ▄████████     ███   ');
+  ecrireEnPositionXY(Xpos,Ypos+1  ,'  ███    ███ ███    ███   ███    ███   ███    ███   ███    ███ ▀█████████▄ ');
+  ecrireEnPositionXY(Xpos,Ypos+2  ,'  ███    █▀  ███    ███   ███    ███   ███    █▀    ███    █▀     ▀███▀▀██ ');
+  ecrireEnPositionXY(Xpos,Ypos+3  ,' ▄███▄▄▄     ███    ███  ▄███▄▄▄▄██▀  ▄███▄▄▄       ███            ███   ▀ ');
+  ecrireEnPositionXY(Xpos,Ypos+4  ,'▀▀███▀▀▀     ███    ███ ▀▀███▀▀▀▀▀   ▀▀███▀▀▀     ▀███████████     ███     ');
+  ecrireEnPositionXY(Xpos,Ypos+5  ,'  ███        ███    ███ ▀███████████   ███    █▄           ███     ███     ');
+  ecrireEnPositionXY(Xpos,Ypos+6  ,'  ███        ███    ███   ███    ███   ███    ███    ▄█    ███     ███     ');
+  ecrireEnPositionXY(Xpos,Ypos+7  ,'  ███         ▀██████▀    ███    ███   ██████████  ▄████████▀     ▄████▀   ');
+  ecrireEnPositionXY(Xpos,Ypos+8  ,'                          ███    ███                                       ');
+end;
+
+procedure afficherBackground(color: Integer);
+begin
+  couleurTexte(color);
+end;
+
+procedure afficherSousTitre(color, pos: Integer);
+begin
+  couleurTexte(color);
+
+  ecrireAuCentre(pos  ,'	+-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+-+     ');
+  ecrireAuCentre(pos+1,'	| R A C E  A G A I N S T   T H E  C I V I L I Z A T I O N |     ');
+  ecrireAuCentre(pos+2,'	+-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+-+     ');
+end;
+
+procedure ancien();
+begin
+  deplacerCurseurXY(0,0);
+  ecrireAuCentre(0, '                                    ______ ___________ _____ _____ _____                 ');
+  ecrireAuCentre(1, '                                    |  ___|  _  | ___ \  ___/  ___|_   _|                ');
+  ecrireAuCentre(2, '                                    | |   | | | | |_/ / |__ \ `--.  | |                  ');
+  ecrireAuCentre(3, '		        "$$o.	    |  _| | | | |    /|  __| `--. \ | |                                 ');
+  ecrireAuCentre(4, '		          "*$$o.    | |   \ \_/ / |\ \| |___/\__/ / | |                               ');
+  ecrireAuCentre(5, '		             "$$$o. \_|    \___/\_| \_\____/\____/  \_/                               ');
+  ecrireAuCentre(6, '		        "$$$$bo...      ..o:                                  ');
+  ecrireAuCentre(7, '		          "$$$$$$$$booocS$$$    ..    ,.                      ');
+  ecrireAuCentre(8, '		       ".    "*$$$$SP     V$o..o$$. .$$$b                     ');
+  ecrireAuCentre(9, '		        "$$o. .$$$$$o. ...A$$$$$$$$$$$$$$b                  ');
+  ecrireAuCentre(10,'		  ""bo.   "*$$$$$$$$$$$$$$$$$$$$P*$$$$$$$$:                   ');
+  ecrireAuCentre(11,' 	     "$$.    V$$$$$$$$$P"**""*"   VP  * "l                    ');
+  ecrireAuCentre(12,'		       "$$$o.4$$$$$$$$X                                       ');
+  ecrireAuCentre(13,'		        "*$$$$$$$$$$$$$AoA$o..oooooo..           .b           ');
+  ecrireAuCentre(14,'		               .X$$$$$$$$$$$P""     ""*oo,,     ,$P           ');
+  ecrireAuCentre(15,'		              $$P""V$$$$$$$:    .        ""*****"             ');
+  ecrireAuCentre(16,'		            .*"    A$$$$$$$$o.4;      .                       ');
+  ecrireAuCentre(17,'		                 .oP""   "$$$$$$b.  .$;                       ');
+  ecrireAuCentre(18,'		                          A$$$$$$$$$$P                        ');
+  ecrireAuCentre(19,'		                          "  "$$$$$P"                         ');
+  ecrireAuCentre(20,'		                              $$P*"                           ');
+  ecrireAuCentre(21,'		                              .$"                       ');
+  ecrireAuCentre(22,'		                               "                              ');
+end;
+
+procedure prochainDialogue();
+begin
+  readln;
+  effacerEtColorierEcran(White);
+  sleep(1000);
+end;
+
+procedure nouveau(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+begin
+  initialisationVariables(game, civ, combat);
+  effacerEcran();
+
+  ecrireAuCentre(13,'Choisissez votre nom de héros ! !');
+
+  dessinerCadreXY(47,15,72,17,simple,White,Black);
+  deplacerCurseurXY(52,16);
+  readln(civ.NomHeros);
+
+  FadeToWhite(300);
+
+  ecrireAuCentre(13,'Il était une fois ...');
+  prochainDialogue();
+  ecrireAuCentre(12,'la civilisation des Sylvains, vivant paisiblement');
+  sleep(1000);
+  ecrireAuCentre(13,'depuis de longues années dans la forêt...');
+  prochainDialogue();
+  ecrireAuCentre(12,'Un jeune héros nommé Ryu''Than, maître du clan de la civilisation,');
+  sleep(1000);
+  ecrireAuCentre(13,'');
+
+
+  readln;
+  FadeToBlack(300);
+
+  game.Screen := 'ecranPrincipal';
+end;
+
+procedure charger(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+var
+  nbFile: Integer;
+  info: TInfo;
+begin
+  // On actualise l'écran
+  effacerEcran();
+  ancien();
+
+  // On extrait les informations concernant les noms de fichier
+  readInfo(info);
+
+  ecrireEnPositionXY(50,24,'1 - '+info.filename1);
+  ecrireEnPositionXY(50,25,'2 - '+info.filename2);
+  ecrireEnPositionXY(50,26,'3 - '+info.filename3);
+  ecrireEnPositionXY(50,28,'0 - Ne pas charger');
+
+  // Affichage du cadre de réponse
+  dessinerCadreXY(95,26,105,28, simple, White, Black);
+  deplacerCurseurXY(100,27);
+  readln(game.Input);
+
+  if (game.Input >= 1) and (game.Input <= 3) then
+    begin
+      nbFile := game.Input;
+      readFile(nbFile, game, civ, combat);
+      game.Screen := 'ecranPrincipal';
+    end;
+
+end;
+
+procedure quitter(var game: TGame);
+begin
+  game.Run := False;
+end;
+
+procedure menuInitial(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+// Cette procédure correspond à l'affichage du menu initial.
+begin
+
+    // Ancien display
+    {$REGION}
+    {
+    afficherBackground(LightGray);
+    afficherDragon   (LightRed,3);
+    afficherTitre    (LightGreen,30,1);
+    afficherSousTitre(White,22);
+    }
+    {$ENDREGION}
+
+  ancien();
+
+  // Affichage du cadre de réponse
+  dessinerCadreXY(35,26,85,28, simple, White, Black);
+  ecrireAuCentre(27,'Appuyez sur Entrée pour continuer.');
+  readln;
+
+  // On efface l'écran
+  effacerEcran();
+
+  ancien();
+
+  ecrireEnPositionXY(50,25,'1 - Nouvelle partie');
+  ecrireEnPositionXY(50,26,'2 - Charger une partie');
+  ecrireEnPositionXY(50,27,'3 - Quitter');
+
+  // Affichage du cadre de réponse
+  dessinerCadreXY(95,26,105,28, simple, White, Black);
+  deplacerCurseurXY(100,27);
+  readln(game.Input);
+
+  // Lecture de la réponse du joueur
+  case game.Input of
+    1: nouveau(game, civ, combat);
+    2: charger(game, civ, combat);
+    3: quitter(game);
+    else beep();
+  end;
+
+  effacerEcran();
+
+end;
+
+
+
+end.

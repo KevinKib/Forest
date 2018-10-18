@@ -1,0 +1,63 @@
+program FOREST;
+{RÔLE : Ce programme a pour rôle d'appeler la procedure Main qui détermine quelle sera la fenêtre affichée}
+
+{$APPTYPE CONSOLE}
+{$R *.res}
+
+uses
+  System.SysUtils,
+  menuInitial_UNIT              in 'Scripts\menuInitial_UNIT.pas',
+  ecranPrincipal_UNIT           in 'Scripts\ecranPrincipal_UNIT.pas',
+  ecranDeCombat_UNIT            in 'Scripts\ecranDeCombat_UNIT.pas',
+  gestionCapitale_UNIT          in 'Scripts\gestionCapitale_UNIT.pas',
+  gestionDeCombat_UNIT          in 'Scripts\gestionDeCombat_UNIT.pas',
+  fonctionsGlobales_UNIT        in 'Scripts\fonctionsGlobales_UNIT.pas',
+  moduleGestionEcran_UNIT       in 'Scripts\moduleGestionEcran_UNIT.pas',
+  initialisationVariables_UNIT  in 'Scripts\initialisationVariables_UNIT.pas',
+  gestionSciences_UNIT          in 'Scripts\gestionSciences_UNIT.pas',
+  gestionMarche_UNIT            in 'Scripts\gestionMarche_UNIT.pas',
+  sauvegarde_UNIT               in 'Scripts\sauvegarde_UNIT.pas'
+  //crt_mini in 'Scripts\crt-120\crt_mini.pas'
+  ;
+
+procedure Main();
+{RÔLE : Cette procédure détermine quel sera le prochain menu à être affiché.
+* Elle a pour rôle de faire fonctionner le jeu entier.}
+  var
+    game: TGame;
+    civ: TCivilisation;
+    combat: TCombat;
+    {PRINCIPE : Grâce à une alternative, on détermine quel sera le prochain menu à être affiché.
+* Par exemple, si la variable game.Screen vaut 'menuItinital' alors on appelle la sous procédure menuInitial
+* qui affichera le menu initial et ainsi de suite.}
+  begin
+
+    initialisationVariables(game, civ, combat);
+    couleurTexte(White);
+
+    repeat
+
+      { Boucle principale du jeu.
+        La variable game.Screen peut être éditée dans toutes les unités du programme.
+        C'est cette variable qui détermine quel sera le prochain menu à être affiché.
+        Simplement exécuter les procédures a partir des autres procédures est une autre solution,
+        plus simple.   }
+
+      if      game.Screen = 'menuInitial'     then menuInitial(game, civ, combat)
+      else if game.Screen = 'ecranPrincipal'  then ecranPrincipal(game, civ, combat)
+      else if game.Screen = 'ecranDeCombat'   then ecranDeCombat(game, civ, combat)
+      else if game.Screen = 'gestionCapitale' then gestionCapitale(game, civ, combat)
+      else if game.Screen = 'gestionDeCombat' then gestionDeCombat(game, civ, combat)
+      else if game.Screen = 'gestionSciences' then gestionSciences(game, civ, combat)
+      else if game.Screen = 'gestionMarche'   then gestionMarche(game, civ, combat);
+
+    until (game.Run = False);
+
+  end;
+
+{PRINCIPE : on appelle simplement la procédure Main}
+begin
+
+  Main();
+
+end.

@@ -1,0 +1,107 @@
+unit initialisationVariables_UNIT;
+{ Cette unité a pour rôle d'initialiser toutes les variables et types de variables
+  utilisées dans tout le programme. }
+
+interface
+
+type
+    TGame = record
+          Input: Integer;                 // Contient toutes les réponses du joueur
+          Run: Boolean;                   // Détermine si le jeu tourne ou non
+          Screen: String;                 // Ecran actuel du jeu
+          NbTour: Integer;                // Numéro du tour actuel
+          end;
+
+    TCivilisation = record
+          {DEFINITION DE LA CIVILISATION}
+          Nom: String;                    // Nom de la civilisation
+          Ville: String;                  // Nom de la ville de cette civilisation
+          Population: Integer;            // Quantité de population
+
+          {ATTRIBUTS DE LA CIVILISATION}
+          Food: Integer;                  // Quantité de nourriture
+          Food_Max: Integer;              // Quantité de stockage de nourriture
+          Food_Par_Tour: Integer;         // Quantité de nourriture produite par tour
+          Nb_Tours_Levelup: Integer;      // Nombre de tours avant croissance
+          Caserne: Boolean;               // Détermine si la caserne a été construite
+          PointsRecrutement: Integer;     // Nombre de points de recrutement
+
+          {VARIABLES DE CONSTRUCTION}
+          Construction_Texte: String;     // Affichage du statut de la construction en cours
+          CurrentConstruction: String;    // Définit la construction actuelle
+          NbConstructions: Integer;       // Nombre de constructions achevées
+          lvlFerme: Integer;              // Niveau actuel de la ferme
+          lvlMine: Integer;               // Niveau actuel de la mine
+          lvlCarriere: Integer;           // Niveau actuel de la carrière
+          lvlCaserne: Integer;            // Niveau actuel de la caserne
+          Travail: Integer;               // Quantité de travail accumulé
+          Travail_Max: Integer;           // Quantité de travail nécessitée pour la construction
+          Travail_Par_Tour: Integer;      // Quantité de travail disponible par tour pour la construction
+
+          {VARIABLES DE TEXTE}
+          texteCivilisation: String;
+          texteTour: String;
+          texteConstruction: String;
+          texteTravail: String;
+          end;
+
+    TCombat = record
+          Adversaire: String;             // Nom de l'adversaire de combat
+          SoldatsDispo: Integer;          // Nombre de soldats disponibles pour le joueur
+          CanonsDispo: Integer;           // Nombre de canons disponibles pour le joueur
+          SoldatsEnnemis: Integer;        // Nombre de soldats disponibles pour l'ennemi
+          CanonsEnnemis: Integer;         // Nombre de canons disponibles pour l'ennemi
+          Recrutement_Texte: String;      // Texte s'affichant lors du recrutement sur l'écran de gestion militaire
+          Seed : integer                  // Graine servant à différencer l'attaque du petit/grand cmap barbare
+          end;
+
+procedure initialisationVariables(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+
+implementation
+
+  procedure initialisationVariables(var game: TGame; var civ: TCivilisation; var combat: TCombat);
+  // Cette procédure initialise les différentes variables.
+  // Penser à demander si ces variables sont globales ou non.
+  begin
+
+    game.Screen := 'menuInitial';
+    game.Input  := 0;
+    game.Run    := True;
+    game.NbTour := 1;
+
+    civ.Nom               := 'France';       // test des variables
+    civ.Ville             := 'Paris' ;
+    civ.Population        := 1;
+    civ.Food              := 0;
+    civ.Food_Max          := 10;
+    civ.Food_Par_Tour     := 1 ;
+    civ.Nb_Tours_Levelup  := 10;
+    civ.PointsRecrutement := 5;
+
+    civ.CurrentConstruction := 'Aucun';
+    civ.lvlFerme          := 0;
+    civ.lvlMine           := 0;
+    civ.lvlCarriere       := 0;
+    civ.lvlCaserne        := 0;
+    civ.Travail           := 0;
+    civ.Travail_Max       := 0;
+    civ.Travail_Par_Tour  := civ.Population;
+    civ.NbConstructions   := 0;
+
+    civ.texteConstruction := '';
+    civ.texteTravail      := '';
+    civ.texteCivilisation := '';
+    civ.texteTour         := '';
+
+    combat.Recrutement_Texte  := '';
+    combat.Adversaire         := 'Petit camps barbare';
+    combat.SoldatsDispo       := 5;
+    combat.CanonsDispo        := 0;
+    combat.SoldatsEnnemis     := 0;
+    combat.CanonsEnnemis      := 0;
+    combat.Seed               := 1; //SEED : 1 si petit camp et 2 si grand camp humain
+
+  end;
+
+
+end.
